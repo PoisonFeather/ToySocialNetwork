@@ -1,0 +1,60 @@
+socialNetworkService determinarea id maxim:
+before:
+Long newId = 0L;
+for(Utilizator u : repoUtilizatori.findAll()){
+    if(u.getId() > newId){
+        newId = u.getId();
+    }
+}
+user.setId(newId + 1);
+
+
+after:
+Long newId = StreamSupport.stream(repoUtilizatori.findAll().spliterator(), false)
+        .map(Utilizator::getId)
+        .max(Long::compareTo)
+        .orElse(0L);
+user.setId(newId + 1);
+
+
+SocialNetworkService stergere prietenii:
+before
+List<Long> prieteniiDeSters = new ArrayList<>();
+for (Prietenie p : repoPrietenii.findAll()) {
+    if (p.getIdUser1().equals(id) || p.getIdUser2().equals(id)) {
+        prieteniiDeSters.add(p.getId());
+    }
+}
+for (Long idPrietenie : prieteniiDeSters) {
+    repoPrietenii.delete(idPrietenie);
+}
+
+
+after:
+List<Prietenie> prieteniiDeSters = repoPrietenii.findAll(p ->
+              p.getIdUser1().equals(id) || p.getIdUser2().equals(id));
+
+      prieteniiDeSters.forEach(p -> repoPrietenii.delete(p.getId()));
+
+
+ Comunitatiservice cel mai lung drum:
+ before:
+ int max = 0;
+        for(Utilizator u: componenta){
+            Set<Long> vizitatePath = new HashSet<>();
+            int lungimeDrum = dfsCelMaiLungDrum(u,vizitatePath);
+            if(lungimeDrum > max){
+                max = lungimeDrum;
+            }
+        }
+        return max;
+
+after:
+return componenta.stream()
+        .mapToInt(u -> {
+            Set<Long> vizitatePath = new HashSet<>();
+            return dfsCelMaiLungDrum(u, vizitatePath);
+        })
+        .max()
+        .orElse(0);
+
