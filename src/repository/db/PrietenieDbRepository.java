@@ -1,6 +1,8 @@
-package repository;
+package repository.db;
 import domain.Prietenie;
 import domain.validators.Validator;
+import repository.Repository;
+
 import java.util.Optional;
 public class PrietenieDbRepository implements Repository<Long,Prietenie> {
     private String url;

@@ -1,7 +1,9 @@
-package repository;
+package repository.file;
 
 import domain.Entity;
 import domain.validators.Validator;
+import repository.InMemoryRepository;
+import repository.RepositoryException;
 
 import java.io.IOException;
 import java.nio.file.Files;

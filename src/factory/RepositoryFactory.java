@@ -4,6 +4,8 @@ import domain.Prietenie;
 import domain.Utilizator;
 import domain.validators.Validator;
 import repository.*;
+import repository.file.PrietenieFileRepository;
+import repository.file.UtilizatorFileRepository;
 
 import java.io.InputStream;
 import java.util.EnumMap;
