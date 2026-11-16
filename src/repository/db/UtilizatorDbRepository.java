@@ -63,11 +63,91 @@ public class UtilizatorDbRepository  implements Repository<Long,Utilizator> {
             throw new RepositoryException("Eroare la baza de date cautand utilizatorul: "+ e.getMessage(),e);
         }
         return Optional.empty();
-
     }
 
-    @Override public Iterable<Utilizator> findAll() {throw new UnsupportedOperationException("Baza de date nu e implementata inca!");};
-    @Override public Optional<Utilizator> save(Utilizator entity) {throw new UnsupportedOperationException("Baza de date nu a fost implementata inca!");};
-    @Override public Optional<Utilizator> delete(Long id){ throw new UnsupportedOperationException("Baza de date nu a fost implementata inca");};
-    @Override public Optional<Utilizator> update(Utilizator entity){throw new UnsupportedOperationException("Baza de date nu a fost implementata inca!");};
+    @Override public Iterable<Utilizator> findAll() {
+        List<Utilizator> users = new ArrayList<>();
+        String sql = "SELECT id, first_name,last_name FROM users ORDER BY id";
+        try(Connection conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet  rs = ps.executeQuery()){
+            while(rs.next()){
+                users.add(extractEntity(rs));
+            }
+        } catch(SQLException e){
+            throw new RepositoryException("Eroare la baza de date cand cauta toti utilizatorii: "+e.getMessage(),e);
+        }
+        return users;
+    }
+    @Override public Optional<Utilizator> save(Utilizator entity) {
+        if(entity == null){
+            throw new IllegalArgumentException("Entitatea nu poate fi null");
+        }
+        validator.validate(entity);
+        String sql = "INSERT INTO users (first_name,last_name) VALUES (?,?)";
+        try(Connection conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS)){
+            ps.setString(1,entity.getFirstName());
+            ps.setString(2,entity.getLastName());
+
+            int affectedRows = ps.executeUpdate();
+            if(affectedRows>0){
+                try(ResultSet generatedKeys = ps.getGeneratedKeys()){
+                    if(generatedKeys.next()){
+                        entity.setId(generatedKeys.getLong(1));
+                    }
+                }
+                return Optional.empty();
+            }
+        } catch(SQLException e){
+            throw new RepositoryException("Eroare la db cand am salvat user: "+e.getMessage(),e);
+        }
+        return Optional.of(entity);
+
+    }
+    @Override public Optional<Utilizator> delete(Long id){
+        if(id == null){
+            throw new IllegalArgumentException("Id-ul nu poate fi null!");
+        }
+        Optional<Utilizator> existing = findOne(id);
+        if(existing.isEmpty()){
+            return Optional.empty();
+        }
+        String sql = "DELETE FROM users WHERE id = ?";
+        try(Connection conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setLong(1,id);
+            int affectedRows = ps.executeUpdate();
+            if(affectedRows > 0){
+                return existing;
+            }
+        }catch(SQLException e){
+            throw new RepositoryException("Eroare la db cand am vrut sa sterg user: "+e.getMessage(),e);
+        }
+        return Optional.empty();
+    }
+    @Override public Optional<Utilizator> update(Utilizator entity){
+        if(entity == null){
+            throw new IllegalArgumentException("Entitatea nu poate fi null");
+        }
+        if(entity.getId() == null){
+            throw new IllegalArgumentException("Id-ul entitatii nu poate fii null");
+        }
+        validator.validate(entity);
+        String sql = "UPDATE usrs SET first_name = ?, last_name = ?, WHERE id=?";
+        try(Connection conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setString(1,entity.getFirstName());
+            ps.setString(2,entity.getLastName());
+            ps.setLong(3,entity.getId());
+
+            int affectedRows = ps.executeUpdate();
+            if(affectedRows > 0){
+                return Optional.empty();
+            }
+        }catch(SQLException e){
+            throw new RepositoryException("Eroare la db cand am dat update la user "+ e.getMessage(),e);
+        }
+        return Optional.of(entity);
+    }
 }
