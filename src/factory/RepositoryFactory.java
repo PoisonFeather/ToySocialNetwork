@@ -3,19 +3,26 @@ package factory;
 import domain.Prietenie;
 import domain.Utilizator;
 import domain.validators.Validator;
-import repository.*;
-import repository.file.PrietenieFileRepository;
-import repository.file.UtilizatorFileRepository;
+import repository.InMemoryRepository;
+import repository.Repository;
+import repository.RepositoryException;
+import repository.RepositoryType;
 import repository.db.PrietenieDbRepository;
 import repository.db.UtilizatorDbRepository;
+import repository.file.PrietenieFileRepository;
+import repository.file.UtilizatorFileRepository;
 
-
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 
+/**
+ * Singleton factory responsible for instantiating repository implementations
+ * (Memory, File, or Database) based on the settings in {@code config.properties}.
+ */
 public class RepositoryFactory {
     private static RepositoryFactory instance = null;
     private final Properties properties;
@@ -26,13 +33,18 @@ public class RepositoryFactory {
             if (is != null) {
                 properties.load(is);
             } else {
-                throw new RuntimeException("Fisierul de configuratie nu a fost gasit");
+                throw new RepositoryException("Fisierul de configuratie config.properties nu a fost gasit!");
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Eroare la citirea configurarilor: " + e.getMessage());
+        } catch (IOException e) {
+            throw new RepositoryException("Eroare la citirea configurarilor: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Returns the singleton instance of {@code RepositoryFactory}.
+     *
+     * @return the shared factory instance
+     */
     public static RepositoryFactory getInstance() {
         if (instance == null) {
             instance = new RepositoryFactory();
@@ -40,6 +52,12 @@ public class RepositoryFactory {
         return instance;
     }
 
+    /**
+     * Creates a user repository configured according to {@code repository.type}.
+     *
+     * @param validator the validator used for {@link Utilizator} entities
+     * @return a configured {@link Repository} for users
+     */
     public Repository<Long, Utilizator> createUtilizatorRepository(Validator<Utilizator> validator) {
         String typeStr = properties.getProperty("repository.type", "MEMORY");
         RepositoryType type;
@@ -47,10 +65,9 @@ public class RepositoryFactory {
         try {
             type = RepositoryType.valueOf(typeStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RepositoryException("Tip invalid de repository specificat în config.properties: " + typeStr);
+            throw new RepositoryException("Tip invalid de repository specificat in config.properties: " + typeStr);
         }
 
-        // switch -> map + supplier
         Map<RepositoryType, Supplier<Repository<Long, Utilizator>>> repoStrategies = new EnumMap<>(RepositoryType.class);
 
         repoStrategies.put(RepositoryType.MEMORY, () -> new InMemoryRepository<>(validator));
@@ -73,6 +90,12 @@ public class RepositoryFactory {
         return strategy.get();
     }
 
+    /**
+     * Creates a friendship repository configured according to {@code repository.type}.
+     *
+     * @param validator the validator used for {@link Prietenie} entities
+     * @return a configured {@link Repository} for friendships
+     */
     public Repository<Long, Prietenie> createPrietenieRepository(Validator<Prietenie> validator) {
         String typeStr = properties.getProperty("repository.type", "MEMORY");
         RepositoryType type;
@@ -80,10 +103,9 @@ public class RepositoryFactory {
         try {
             type = RepositoryType.valueOf(typeStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RepositoryException("Tip invalid de repository specificat în config.properties: " + typeStr);
+            throw new RepositoryException("Tip invalid de repository specificat in config.properties: " + typeStr);
         }
 
-        //  switch -> map + supplier
         Map<RepositoryType, Supplier<Repository<Long, Prietenie>>> repoStrategies = new EnumMap<>(RepositoryType.class);
 
         repoStrategies.put(RepositoryType.MEMORY, () -> new InMemoryRepository<>(validator));
