@@ -14,14 +14,20 @@ public class Main {
 
         Validator<Prietenie> prietenieValidator = entity -> {};
 
-        RepositoryFactory factory = RepositoryFactory.getInstance();
-        Repository<Long, Utilizator> utilizatorRepository = factory.createUtilizatorRepository(utilizatorValidator);
-        Repository<Long, Prietenie> prietenieRepository = factory.createPrietenieRepository(prietenieValidator);
+        try {
+            RepositoryFactory factory = RepositoryFactory.getInstance();
+            Repository<Long, Utilizator> utilizatorRepository = factory.createUtilizatorRepository(utilizatorValidator);
+            Repository<Long, Prietenie> prietenieRepository = factory.createPrietenieRepository(prietenieValidator);
 
-        SocialNetworkService service = new SocialNetworkService(utilizatorRepository, prietenieRepository);
-        ComunitatiService comunitatiService = new ComunitatiService(utilizatorRepository,prietenieRepository);
+            SocialNetworkService service = new SocialNetworkService(utilizatorRepository, prietenieRepository);
+            ComunitatiService comunitatiService = new ComunitatiService(utilizatorRepository, prietenieRepository);
 
-        ConsoleUI console = new ConsoleUI(service,comunitatiService);
-        console.run();
+            ConsoleUI console = new ConsoleUI(service, comunitatiService);
+            console.run();
+        } catch (repository.RepositoryException e) {
+            System.out.println("Eroare la initializarea stocarii: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Date inconsistente la incarcare: " + e.getMessage());
+        }
     }
 }
