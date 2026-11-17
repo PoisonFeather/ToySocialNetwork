@@ -84,7 +84,7 @@ public class PrietenieDbRepository implements Repository<Long,Prietenie> {
         long id1 = Math.min(prieten.getIdUser1(),prieten.getIdUser2());
         long id2 = Math.max(prieten.getIdUser1(),prieten.getIdUser2());
         LocalDateTime date =prieten.getDate() != null ? prieten.getDate(): LocalDateTime.now();
-        String sql = "INTSERT INTO friendships (id1,id2,friends_from) VALUES (?,?,?)";
+        String sql = "INSERT INTO friendships (id1,id2,friends_from) VALUES (?,?,?)";
         try(Connection conn = getConnection();
             PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setLong(1,id1);
@@ -102,8 +102,68 @@ public class PrietenieDbRepository implements Repository<Long,Prietenie> {
         }
         return Optional.of(prieten);
     }
-    @Override public Optional<Prietenie> delete(Long id){throw new UnsupportedOperationException("Baza de date nu a fost implementata inca!");};
-    @Override public Optional<Prietenie> update(Prietenie prieten){throw new UnsupportedOperationException("Baza de date nu a fost implementata inca!");};
-    @Override public Iterable<Prietenie> findAll(){throw new UnsupportedOperationException("Baza de date nu a fost implementata inca");};
+    @Override public Optional<Prietenie> delete(Long id){
+        if(id == null) throw new IllegalArgumentException("Id-ul nu poate fi null!");
+        Optional<Prietenie> existing  =findOne(id);
+        if(existing.isEmpty()) return Optional.empty();
+
+        long[] ids = unpackId(id);
+        String sql = "DELETE FROM friendships WHERE id1= ? AND id2=?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setLong(1,ids[0]);
+            ps.setLong(2,ids[1]);
+            int affectedRows = ps.executeUpdate();
+            if(affectedRows > 0){
+                return existing;
+            }
+        }catch(SQLException e){
+            throw new RepositoryException("Eroare la db incercand sa sterg prietenie: "+e.getMessage(),e);
+        }
+        return Optional.empty();
+    }
+    @Override public Optional<Prietenie> update(Prietenie prieten){
+            if(prieten == null){
+                throw new IllegalArgumentException("Entity-ul nu poate fi null!");
+            }
+
+            validator.validate(prieten);
+
+            long id1 = Math.min(prieten.getIdUser1(), prieten.getIdUser2());
+            long id2 = Math.max(prieten.getIdUser1(),prieten.getIdUser2());
+            LocalDateTime date = prieten.getDate() !=null? prieten.getDate() : LocalDateTime.now();
+
+            String sql = "UPDATE friendships SET friends_from = ? WHERE id1 = ? AND id2 = ?";
+            try( Connection conn = getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)){
+                ps.setTimestamp(1,Timestamp.valueOf(date));
+                ps.setLong(2,id1);
+                ps.setLong(3,id2);
+
+                int affectedRows = ps.executeUpdate(sql);
+                if(affectedRows >0){
+                    return Optional.empty();
+                }
+            }catch(SQLException e){
+                throw new RepositoryException("Eroare la db pentru update prietenie: " + e.getMessage(),e);
+            }
+            return Optional.of(prieten);
+
+    };
+    @Override
+    public Iterable<Prietenie> findAll() {
+        List<Prietenie> friendships = new ArrayList<>();
+        String sql = "SELECT id1, id2, friends_from FROM friendships ORDER BY id1, id2";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                friendships.add(extractEntity(rs));
+            }
+        } catch (SQLException e) {
+            throw new RepositoryException("Database error while retrieving all friendships: " + e.getMessage(), e);
+        }
+        return friendships;
+    }
 
 }

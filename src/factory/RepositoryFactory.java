@@ -6,6 +6,9 @@ import domain.validators.Validator;
 import repository.*;
 import repository.file.PrietenieFileRepository;
 import repository.file.UtilizatorFileRepository;
+import repository.db.PrietenieDbRepository;
+import repository.db.UtilizatorDbRepository;
+
 
 import java.io.InputStream;
 import java.util.EnumMap;
@@ -56,7 +59,10 @@ public class RepositoryFactory {
             return new UtilizatorFileRepository(path, validator);
         });
         repoStrategies.put(RepositoryType.DATABASE, () -> {
-            throw new UnsupportedOperationException("Metoda pentru baza de date nu a fost inca implementanta!");
+            String url = properties.getProperty("db.url");
+            String user = properties.getProperty("db.user");
+            String password = properties.getProperty("db.password");
+            return new UtilizatorDbRepository(url, user, password, validator);
         });
 
         Supplier<Repository<Long, Utilizator>> strategy = repoStrategies.get(type);
@@ -86,7 +92,10 @@ public class RepositoryFactory {
             return new PrietenieFileRepository(pathPrietenii, validator);
         });
         repoStrategies.put(RepositoryType.DATABASE, () -> {
-            throw new UnsupportedOperationException("Metoda pentru baza de date inca nu este implementata!");
+            String url = properties.getProperty("db.url");
+            String user = properties.getProperty("db.user");
+            String password = properties.getProperty("db.password");
+            return new PrietenieDbRepository(url, user, password, validator);
         });
 
         Supplier<Repository<Long, Prietenie>> strategy = repoStrategies.get(type);

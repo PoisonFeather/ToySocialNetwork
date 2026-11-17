@@ -50,6 +50,7 @@ public class ConsoleUI {
             }catch(IllegalArgumentException iae){
                 System.out.println("Eroare: " + iae.getMessage());
             }
+
         }
     }
 
@@ -58,9 +59,10 @@ public class ConsoleUI {
         String prenume = scanner.nextLine();
         System.out.print("Nume: ");
         String nume = scanner.nextLine();
-        service.adaugaUtilizator(prenume, nume);
-        System.out.println("Utilizator adaugat cu succes!");
+        Utilizator saved = service.adaugaUtilizator(prenume, nume);
+        System.out.println("Utilizator adaugat cu succes! ID generat: " + saved.getId());
     }
+
 
     private void stergeUtilizator() {
         System.out.print("ID Utilizator: ");

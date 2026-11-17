@@ -30,7 +30,16 @@ public class InMemoryRepository<ID, E extends Entity<ID>> implements Repository<
     public Optional<E> save(E entity) {
         if (entity == null) throw new IllegalArgumentException("Entitatea nu poate fi null!");
         validator.validate(entity);
-        if (entities.get(entity.getId()) != null) {
+        if (entity.getId() == null) {
+            long maxId = entities.keySet().stream()
+                    .filter(k -> k instanceof Long)
+                    .mapToLong(k -> (Long) k)
+                    .max()
+                    .orElse(0L);
+            @SuppressWarnings("unchecked")
+            ID generatedId = (ID) Long.valueOf(maxId + 1);
+            entity.setId(generatedId);
+        } else if (entities.get(entity.getId()) != null) {
             return Optional.of(entity);
         }
         entities.put(entity.getId(), entity);

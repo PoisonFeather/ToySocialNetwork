@@ -19,7 +19,7 @@ public class Main {
         Repository<Long, Prietenie> prietenieRepository = factory.createPrietenieRepository(prietenieValidator);
 
         SocialNetworkService service = new SocialNetworkService(utilizatorRepository, prietenieRepository);
-        ComunitatiService comunitatiService = new ComunitatiService(utilizatorRepository);
+        ComunitatiService comunitatiService = new ComunitatiService(utilizatorRepository,prietenieRepository);
 
         ConsoleUI console = new ConsoleUI(service,comunitatiService);
         console.run();
