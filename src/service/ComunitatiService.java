@@ -119,6 +119,8 @@ public class ComunitatiService {
                 })
                 .max()
                 .orElse(0);
+        //.mapToInt() e o operatie intermediara(lazy)
+        //.max e operatie terminala produce un OptionalInt
     }
 
     private int dfsCelMaiLungDrum(Utilizator u, Set<Long> vizitate) {

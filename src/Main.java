@@ -1,6 +1,7 @@
 import domain.Prietenie;
 import domain.Utilizator;
 import domain.validators.UtilizatorValidator;
+import domain.validators.ValidationException;
 import domain.validators.Validator;
 import repository.Repository;
 import service.SocialNetworkService;
@@ -17,6 +18,7 @@ public class Main {
         try {
             RepositoryFactory factory = RepositoryFactory.getInstance();
             Repository<Long, Utilizator> utilizatorRepository = factory.createUtilizatorRepository(utilizatorValidator);
+
             Repository<Long, Prietenie> prietenieRepository = factory.createPrietenieRepository(prietenieValidator);
 
             SocialNetworkService service = new SocialNetworkService(utilizatorRepository, prietenieRepository);
@@ -29,5 +31,6 @@ public class Main {
         } catch (IllegalArgumentException e) {
             System.out.println("Date inconsistente la incarcare: " + e.getMessage());
         }
+
     }
 }
