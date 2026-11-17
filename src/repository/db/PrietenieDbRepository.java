@@ -76,7 +76,32 @@ public class PrietenieDbRepository implements Repository<Long,Prietenie> {
         }
         return Optional.empty();
     }
-    @Override public Optional<Prietenie> save(Prietenie prieten){throw new UnsupportedOperationException("Baza de date nu a fost implementata inca!");};
+    @Override public Optional<Prietenie> save(Prietenie prieten){
+        if(prieten == null){
+            throw new IllegalArgumentException("Entitatea nu poate fii null!");
+        }
+        validator.validate(prieten);
+        long id1 = Math.min(prieten.getIdUser1(),prieten.getIdUser2());
+        long id2 = Math.max(prieten.getIdUser1(),prieten.getIdUser2());
+        LocalDateTime date =prieten.getDate() != null ? prieten.getDate(): LocalDateTime.now();
+        String sql = "INTSERT INTO friendships (id1,id2,friends_from) VALUES (?,?,?)";
+        try(Connection conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)){
+            ps.setLong(1,id1);
+            ps.setLong(2,id2);
+            ps.setTimestamp(3,Timestamp.valueOf(date));
+
+            int affectedRows = ps.executeUpdate();
+            if(affectedRows > 0){
+                prieten.setId(packId(id1,id2));
+                prieten.setDate(date);
+                return Optional.empty();
+            }
+        }catch(SQLException e){
+            throw new RepositoryException("Eroare la db incercand sa salvez prietenia: " + e.getMessage(), e);
+        }
+        return Optional.of(prieten);
+    }
     @Override public Optional<Prietenie> delete(Long id){throw new UnsupportedOperationException("Baza de date nu a fost implementata inca!");};
     @Override public Optional<Prietenie> update(Prietenie prieten){throw new UnsupportedOperationException("Baza de date nu a fost implementata inca!");};
     @Override public Iterable<Prietenie> findAll(){throw new UnsupportedOperationException("Baza de date nu a fost implementata inca");};
