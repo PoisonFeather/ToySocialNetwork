@@ -8,13 +8,15 @@ import service.SocialNetworkService;
 import ui.ConsoleUI;
 import service.ComunitatiService;
 import factory.RepositoryFactory;
+
+
 public class Main {
     public static void main(String[] args) {
 
         Validator<Utilizator> utilizatorValidator = new UtilizatorValidator();
 
-        Validator<Prietenie> prietenieValidator = entity -> {};
 
+        Validator<Prietenie> prietenieValidator = entity -> {};
         try {
             RepositoryFactory factory = RepositoryFactory.getInstance();
             Repository<Long, Utilizator> utilizatorRepository = factory.createUtilizatorRepository(utilizatorValidator);
