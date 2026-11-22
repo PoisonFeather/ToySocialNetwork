@@ -3,6 +3,9 @@ import domain.Utilizator;
 import domain.validators.Validator;
 import repository.Repository;
 import repository.RepositoryException;
+import util.paging.Page;
+import util.paging.Pageable;
+import util.paging.PagingRepository;
 
 import java.util.Optional;
 import java.sql.*;
@@ -10,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class UtilizatorDbRepository  implements Repository<Long,Utilizator> {
+public class UtilizatorDbRepository  implements PagingRepository<Long,Utilizator> {
 
     /**
      * Construct a new database repository for users.
@@ -149,5 +152,59 @@ public class UtilizatorDbRepository  implements Repository<Long,Utilizator> {
             throw new RepositoryException("Eroare la db cand am dat update la user "+ e.getMessage(),e);
         }
         return Optional.of(entity);
+    }
+
+    /**
+     * Retrieves a paginated slice of users ordered by ID, executing both the total count
+     * and the paginated query on the same db connection
+     *
+     * @param pageable the pagination parameters (page number and page size)
+     * @return a {@link Page} containing the users on the requested page and the total user count
+     * @throws IllegalArgumentException if {@code pageable is null}
+     * @throws RepositoryException if  a db access error occurs
+     */
+
+    @Override
+    public Page<Utilizator> findAllOnPage(Pageable pageable) {
+        if (pageable == null) {
+            throw new IllegalArgumentException("Pageable nu poate fi null!");
+        }
+
+        List<Utilizator> users = new ArrayList<>();
+        int totalCount = 0;
+
+        String countSql = "SELECT COUNT(*) AS total FROM users";
+        String pageSql = "SELECT id, first_name, last_name FROM users ORDER BY id LIMIT ? OFFSET ?";
+
+        try (Connection conn = getConnection()) {
+            // 1. Numaram totalul utilizatorilor pe aceeasi conexiune
+            try (PreparedStatement countPs = conn.prepareStatement(countSql);
+                 ResultSet countRs = countPs.executeQuery()) {
+                if (countRs.next()) {
+                    totalCount = countRs.getInt("total");
+                }
+            }
+
+            // 2. Extragem doar pagina curenta folosind LIMIT si OFFSET
+            try (PreparedStatement pagePs = conn.prepareStatement(pageSql)) {
+                pagePs.setInt(1, pageable.getPageSize());
+                pagePs.setInt(2, pageable.getPageNumber() * pageable.getPageSize());
+
+                try (ResultSet rs = pagePs.executeQuery()) {
+                    while (rs.next()) {
+                        long id = rs.getLong("id");
+                        String firstName = rs.getString("first_name");
+                        String lastName = rs.getString("last_name");
+                        Utilizator u = new Utilizator(firstName, lastName);
+                        u.setId(id);
+                        users.add(u);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RepositoryException("Database error while retrieving paginated users: " + e.getMessage(), e);
+        }
+
+        return new Page<>(users, totalCount);
     }
 }
