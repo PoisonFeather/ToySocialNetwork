@@ -25,8 +25,9 @@ public class Main {
 
             SocialNetworkService service = new SocialNetworkService(utilizatorRepository, prietenieRepository);
             ComunitatiService comunitatiService = new ComunitatiService(utilizatorRepository, prietenieRepository);
+            int pageSize = factory.getPageSize();
+            ConsoleUI console = new ConsoleUI(service, comunitatiService, pageSize);
 
-            ConsoleUI console = new ConsoleUI(service, comunitatiService);
             console.run();
         } catch (repository.RepositoryException e) {
             System.out.println("Eroare la initializarea stocarii: " + e.getMessage());

@@ -165,5 +165,60 @@ public class PrietenieDbRepository implements Repository<Long,Prietenie> {
         }
         return friendships;
     }
+    /**
+     * Retrieves a paginated list of friends for a specific user using a single SQL query
+     * with {@code JOIN} and window function {@code COUNT(*) OVER()}.
+     *
+     * @param userId   the ID of the user whose friends are queried
+     * @param pageable the pagination parameters (page number and page size)
+     * @return a {@link util.paging.Page} of {@link domain.Utilizator} representing the user's friends on the requested page
+     * @throws IllegalArgumentException if {@code userId} or {@code pageable} is null
+     * @throws RepositoryException      if a database access error occurs
+     */
+    public util.paging.Page<domain.Utilizator> findFriendsOnPage(Long userId, util.paging.Pageable pageable) {
+        if (userId == null) {
+            throw new IllegalArgumentException("ID-ul utilizatorului nu poate fi null!");
+        }
+        if (pageable == null) {
+            throw new IllegalArgumentException("Pageable nu poate fi null!");
+        }
+
+        List<domain.Utilizator> friends = new ArrayList<>();
+        int totalCount = 0;
+
+        String sql = """
+                SELECT u.id, u.first_name, u.last_name, COUNT(*) OVER() AS total_count
+                FROM friendships f
+                JOIN users u ON (f.id1 = ? AND u.id = f.id2) OR (f.id2 = ? AND u.id = f.id1)
+                ORDER BY u.id
+                LIMIT ? OFFSET ?
+                """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, userId);
+            ps.setLong(2, userId);
+            ps.setInt(3, pageable.getPageSize());
+            ps.setInt(4, pageable.getPageNumber() * pageable.getPageSize());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long id = rs.getLong("id");
+                    String firstName = rs.getString("first_name");
+                    String lastName = rs.getString("last_name");
+                    totalCount = rs.getInt("total_count");
+
+                    domain.Utilizator friend = new domain.Utilizator(firstName, lastName);
+                    friend.setId(id);
+                    friends.add(friend);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RepositoryException("Database error while retrieving paginated friends: " + e.getMessage(), e);
+        }
+
+        return new util.paging.Page<>(friends, totalCount);
+    }
 
 }

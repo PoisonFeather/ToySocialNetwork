@@ -127,4 +127,19 @@ public class RepositoryFactory {
 
         return strategy.get();
     }
+
+    /**
+     * Reads the configured page size from {@code config.properties}
+     * @return the positive page size (defaults to 5 if omitted)
+     * @throws IllegalArgumentException if {@code page.size} is not a positive integer
+     */
+    public int getPageSize(){
+        String raw = properties.getProperty("page.size","5");
+        try{
+            int pageSize = Integer.parseInt(raw.trim());
+            if(pageSize < 0) throw new IllegalArgumentException("Page size must be > 0!");
+
+            return pageSize;
+        }catch (NumberFormatException e){ throw new IllegalArgumentException("Invalid value for page.size in config!"); }
+    }
 }

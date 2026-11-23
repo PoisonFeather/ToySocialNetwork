@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/src/db.sql" value="445373dd-4288-4f23-be28-22fd3b478f46" />
+    <file url="file://$PROJECT_DIR$/src/repository/db/PrietenieDbRepository.java" value="445373dd-4288-4f23-be28-22fd3b478f46" />
+  </component>
+</project>
