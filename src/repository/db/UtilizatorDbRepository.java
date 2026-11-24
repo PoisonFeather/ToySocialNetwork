@@ -137,7 +137,7 @@ public class UtilizatorDbRepository  implements PagingRepository<Long,Utilizator
             throw new IllegalArgumentException("Id-ul entitatii nu poate fii null");
         }
         validator.validate(entity);
-        String sql = "UPDATE usrs SET first_name = ?, last_name = ?, WHERE id=?";
+        String sql = "UPDATE users SET first_name = ?, last_name = ?, WHERE id=?";
         try(Connection conn = getConnection();
             PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setString(1,entity.getFirstName());
@@ -177,7 +177,7 @@ public class UtilizatorDbRepository  implements PagingRepository<Long,Utilizator
         String pageSql = "SELECT id, first_name, last_name FROM users ORDER BY id LIMIT ? OFFSET ?";
 
         try (Connection conn = getConnection()) {
-            // 1. Numaram totalul utilizatorilor pe aceeasi conexiune
+            // Numaram totalul utilizatorilor pe aceeasi conexiune
             try (PreparedStatement countPs = conn.prepareStatement(countSql);
                  ResultSet countRs = countPs.executeQuery()) {
                 if (countRs.next()) {
@@ -185,7 +185,7 @@ public class UtilizatorDbRepository  implements PagingRepository<Long,Utilizator
                 }
             }
 
-            // 2. Extragem doar pagina curenta folosind LIMIT si OFFSET
+            // Extragem doar pagina curenta folosind LIMIT si OFFSET
             try (PreparedStatement pagePs = conn.prepareStatement(pageSql)) {
                 pagePs.setInt(1, pageable.getPageSize());
                 pagePs.setInt(2, pageable.getPageNumber() * pageable.getPageSize());
